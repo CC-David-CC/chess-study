@@ -17,9 +17,9 @@ Conflicting or changed files produce an explicit notice.
 ## Evidence
 
 ```sh
-npm install --prefix apps/system/chess-study --ignore-scripts
-npm run typecheck --prefix apps/system/chess-study
-npm test --prefix apps/system/chess-study
+npm install --prefix apps/games/01-phaser-arcade/chess-study --ignore-scripts
+npm run typecheck --prefix apps/games/01-phaser-arcade/chess-study
+npm test --prefix apps/games/01-phaser-arcade/chess-study
 ```
 
 The source model tests cover legal castling/underpromotion rules, stale AI
