@@ -1,0 +1,126 @@
+{
+  "category": "01-phaser-arcade",
+  "id": "chess-study",
+  "title": "Chess Study",
+  "genre": "Single-player chess versus local AI",
+  "pitch": "A calm readable chessboard with a bounded local opponent, move history and optional instructional hints.",
+  "capabilities": [
+    "Pointer/touch board UI",
+    "Worker-based bounded search",
+    "Rich rule validation without coupling to rendering"
+  ],
+  "rules": [
+    "Use chess.js as legal-position/rules authority; implement a small worker opponent rather than pretending chess.js includes AI.",
+    "Legal move selection, castling, en passant, four promotion choices and checkmate. A documented casual draw policy uses the library predicates; do not claim tournament adjudication.",
+    "Each AI search carries a position revision and deadline; loading, undoing or closing invalidates late replies."
+  ],
+  "content": "Play as either side, three explicitly bounded search levels, eight authored tactical exercises and an untimed game.",
+  "state": [
+    "initial FEN and complete move history",
+    "current FEN consistency check",
+    "selected difficulty and side",
+    "exercise id and solved set",
+    "undo history policy",
+    "RNG seed for equally rated AI choices"
+  ],
+  "actions": [
+    {
+      "command": "select-move",
+      "desktop": "Click source then destination or drag",
+      "phone": "Tap source then destination; drag optional",
+      "xr": "Not applicable; plays as a flat browser app."
+    },
+    {
+      "command": "promote",
+      "desktop": "Choose Q/R/B/N with keyboard or pointer",
+      "phone": "Large promotion chooser",
+      "xr": "Not applicable; plays as a flat browser app."
+    },
+    {
+      "command": "undo",
+      "desktop": "Undo button removes a complete human/AI pair when available",
+      "phone": "Same Undo button",
+      "xr": "Not applicable; plays as a flat browser app."
+    },
+    {
+      "command": "hint",
+      "desktop": "Hint button starts bounded search",
+      "phone": "Hint button",
+      "xr": "Not applicable; plays as a flat browser app."
+    }
+  ],
+  "rive": {
+    "asset": "chess-guide.riv",
+    "role": "Non-distracting guide portrait and thinking indicator; the board remains conventional.",
+    "properties": {
+      "thinking": "boolean",
+      "evaluationBand": "enum losing/equal/winning",
+      "phase": "enum menu/play/result"
+    },
+    "events": [
+      "legalMove",
+      "check",
+      "finish"
+    ],
+    "states": [
+      "idle",
+      "thinking",
+      "encourage",
+      "result"
+    ],
+    "artboard": "Main",
+    "stateMachine": "Presentation",
+    "assetStatus": "to_author"
+  },
+  "polish": [
+    "Squares labeled and selected moves distinguishable without color",
+    "Board orientation follows side, not device rotation",
+    "AI never blocks touch scrolling or window movement"
+  ],
+  "tests": [
+    "Underpromotion, en passant exposure and castling through check are rejected/handled correctly.",
+    "Repetition survives save/load because history is retained.",
+    "Worker reply after undo is rejected.",
+    "Search finishes or is canceled at its budget.",
+    "Promotion is playable entirely by touch.",
+    "Exercise completion cannot be granted by a stale search reply."
+  ],
+  "loop": [
+    "map board input to candidate chess move",
+    "validate using rules instance reconstructed from history",
+    "commit one legal move and increase revision",
+    "send immutable position/history to bounded AI worker when required",
+    "accept AI move only for current revision; validate again",
+    "render board and Rive guide from rules state"
+  ],
+  "save": "Save starting FEN plus move history, not FEN alone; reconstruct and verify. Never save a running worker.",
+  "wave": 2,
+  "scope": "Dependency: chess.js, BSD-2-Clause; pin and test the chosen version. No network chess service.",
+  "specVersion": 1,
+  "status": "planned",
+  "implementation": "not_started",
+  "runtimeTests": "not_run",
+  "engine": "Phaser",
+  "singlePlayer": true,
+  "phoneRequired": true,
+  "mountContract": {
+    "export": "mount",
+    "synchronous": true,
+    "returns": [
+      "element",
+      "dispose"
+    ],
+    "productionEntry": "index.mjs",
+    "suppliedEntry": "index.pseudo.mjs"
+  },
+  "xrRequired": false,
+  "riveRequired": true,
+  "riveAssetIncluded": false,
+  "documentKind": "Save starting FEN plus move history, not FEN alone; reconstruct and verify. Never save a running worker.",
+  "sources": [
+    "S01",
+    "S02",
+    "S03",
+    "S19"
+  ]
+}
