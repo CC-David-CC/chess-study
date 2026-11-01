@@ -1,47 +1,42 @@
-# Chess Study
+# Chess Study — desktop integration
 
-**Single-player chess versus local AI · Phaser · single-player · phone required · flat-screen app**
+Chess Study is a single-player chess board backed by `chess.js` 1.4.0. The
+desktop app supports playing either side against three bounded local search
+levels, undo, hints, four promotion choices, eight tactical exercises, keyboard
+shortcuts and a touch board.
 
-> Planned design, not implemented or browser-tested. `index.pseudo.mjs` is an explanatory entry point, not a playable game.
+Each instance owns its board state, Canvas renderer, audio context and AI
+worker. AI requests carry a position revision and deadline; undo, pause, load,
+new game and disposal invalidate late replies by terminating the owned worker.
 
-## Experience
+Save and Open use the signed-in desktop's `My files` context. Files retain the
+initial FEN, complete move history, selected side, difficulty, exercise state,
+RNG state and revision, reproduce and verify the current FEN, and reopen paused.
+Conflicting or changed files produce an explicit notice.
 
-A calm readable chessboard with a bounded local opponent, move history and optional instructional hints.
+## Evidence
 
-## What this demonstrates
+```sh
+npm install --prefix apps/system/chess-study --ignore-scripts
+npm run typecheck --prefix apps/system/chess-study
+npm test --prefix apps/system/chess-study
+```
 
-- Pointer/touch board UI
-- Worker-based bounded search
-- Rich rule validation without coupling to rendering
+The source model tests cover legal castling/underpromotion rules, stale AI
+replies, complete-pair undo, exercise solutions and save reconstruction.
 
-## Rules and complete loop
+Save and Open serialize file actions, pause the board, capture the logical
+snapshot and destination before storage work, and reject stale operations after
+confirmation. A save in progress keeps the desktop close guard active, while
+later edits remain unsaved. Moving or closing the desktop window, changing
+workspace, browser blur and page visibility loss pause the board and require
+Resume. The browser fixture covers desktop and emulated-phone interaction;
+`tests/chess-study-safety.test.mjs` covers a delayed save whose destination
+field changes while storage is pending.
 
-- Use chess.js as legal-position/rules authority; implement a small worker opponent rather than pretending chess.js includes AI.
-- Legal move selection, castling, en passant, four promotion choices and checkmate. A documented casual draw policy uses the library predicates; do not claim tournament adjudication.
-- Each AI search carries a position revision and deadline; loading, undoing or closing invalidates late replies.
+## Remaining gates
 
-## Bounded polished release
-
-Play as either side, three explicitly bounded search levels, eight authored tactical exercises and an untimed game.
-
-- Squares labeled and selected moves distinguishable without color
-- Board orientation follows side, not device rotation
-- AI never blocks touch scrolling or window movement
-
-No multiplayer, accounts, server simulation or generic editor is required. Start, rules/help, play/activity, pause, outcome/goal feedback and retry must all be complete. Settings include volume/mute, reduced motion, contrast and game-specific options where meaningful. State changes occur in the game model; animations illustrate them.
-
-## Rive inside this app
-
-Non-distracting guide portrait and thinking indicator; the board remains conventional. The requested asset is `chess-guide.riv`; it is **not included**. See [RIVE.md](RIVE.md) for the authoring/integration contract. A placeholder or unrelated animated logo does not satisfy this requirement.
-
-## Save behavior
-
-Save starting FEN plus move history, not FEN alone; reconstruct and verify. Never save a running worker. See [SAVE.md](SAVE.md). Loading starts paused; resume is explicit. Restart and load cancel stale callbacks and any owned AI work.
-
-## Build sequence
-
-Implement the rule loop in [gameplay.pseudo.txt](gameplay.pseudo.txt); bind the exact app lifecycle from [index.pseudo.mjs](index.pseudo.mjs); complete [CONTROLS.md](CONTROLS.md); author/integrate [RIVE.md](RIVE.md); then satisfy [ACCEPTANCE.md](ACCEPTANCE.md). Do not add XR or a 3D engine solely to widen the technology list.
-
-Target wave: **2**. Integrator first reads [AGENTS.md](../../AGENTS.md); do not guess host APIs from symbolic helper names.
-
-Dependency: chess.js, BSD-2-Clause; pin and test the chosen version. No network chess service.
+No authored `chess-guide.riv` is present. The visible guide is explicitly a
+development fallback, so the Rive acceptance gate remains open. Physical-phone
+testing, complete AI strength/performance measurements and a full
+cross-device playthrough remain unverified.
