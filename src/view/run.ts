@@ -152,6 +152,7 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
  };
  const activateSquare=(square:Square)=>{
   if(busy||paused||disposed||session.result!=='playing')return;
+  if(session.isAiTurn()){tell('Wait for the local AI to move.');return}
   const chess=currentChess(),piece=chess.get(square);
   if(selected===null){if(piece&&piece.color===session.turn){selected=square;draw()}else tell('Choose a piece on the side to move.');return}
   if(selected===square){selected=null;draw();return}
@@ -161,7 +162,7 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
   mark();audio.move();afterMove();
  };
  const boardPointer=(event:PointerEvent)=>{const square=squareFor(event);if(square!==null)activateSquare(square)};
- const keyboard=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();togglePause()}else if(event.key.toLowerCase()==='u'){event.preventDefault();undoMove()}else if(event.key.toLowerCase()==='h'){event.preventDefault();showHint()}};
+ const keyboard=(event:KeyboardEvent)=>{if(event.target instanceof Element&&event.target.closest('input,textarea,select,button,[contenteditable]:not([contenteditable=false])'))return;if(event.key==='Escape'){event.preventDefault();togglePause()}else if(event.key.toLowerCase()==='u'){event.preventDefault();undoMove()}else if(event.key.toLowerCase()==='h'){event.preventDefault();showHint()}};
 
  function togglePause(){
   if(disposed||busy)return;
@@ -172,9 +173,9 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
  function showHint(){if(busy)return;const move=session.hint();tell(move===null?'No hint is available.':'Hint: '+move)}
  function undoMove(){
   if(busy)return;stopAi();selected=null;
-  if(session.exerciseId!==null){const base=ChessStudySession.startExercise(session.exerciseId,session.difficulty);session=base;tell('Exercise reset.')}
+  if(session.exerciseId!==null){const base=ChessStudySession.startExercise(session.exerciseId,session.difficulty);session=base;mark();tell('Exercise reset.')}
   else if(session.undo()){mark();tell('Your previous turn was restored.')}
-  else tell('There is no complete turn to undo.');
+  else {tell('There is no turn to undo.');if(!paused&&session.isAiTurn())scheduleAi();}
   draw();
  }
  async function reset(){

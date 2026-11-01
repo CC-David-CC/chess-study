@@ -54,6 +54,20 @@ describe("ChessStudySession rules", () => {
     expect(session.fen()).toBe(session.initialFen);
   });
 
+  it("undoes an unanswered player move before or after a complete turn", () => {
+    const s=ChessStudySession.startGame("w",1);s.move("e2","e4");const pending=s.revision;
+    expect(s.undo()).toBe(true);expect(s.fen()).toBe(s.initialFen);
+    expect(s.acceptAiMove({revision:pending,from:"e7",to:"e5"}).ok).toBe(false);
+    s.move("e2","e4");s.move("e7","e5");const afterPair=s.fen();s.move("g1","f3");
+    expect(s.undo()).toBe(true);expect(s.fen()).toBe(afterPair);expect(s.turn).toBe("w");
+  });
+
+  it("keeps the AI opening when undoing as black and restores complete black turns", () => {
+    const s=ChessStudySession.startGame("b",1);expect(s.undo()).toBe(false);s.move("e2","e4");
+    const opening=s.fen();expect(s.undo()).toBe(false);s.move("e7","e5");expect(s.undo()).toBe(true);expect(s.fen()).toBe(opening);
+    s.move("e7","e5");s.move("g1","f3");expect(s.undo()).toBe(true);expect(s.fen()).toBe(opening);
+  });
+
   it("repetition state survives save/load because history is retained", () => {
     const session = ChessStudySession.startGame("w", 1);
     const moves: [string, string][] = [

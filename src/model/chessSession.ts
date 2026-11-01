@@ -126,10 +126,12 @@ export class ChessStudySession {
     return this.move(reply.from, reply.to, reply.promotion);
   }
 
-  /** Undo removes a complete human/AI pair when one is available. */
+  /** Undo an unanswered player move, or the most recent completed pair. */
   undo(): boolean {
-    if (this.exerciseId !== null || this.history.length < 2) return false;
-    const remaining = this.history.slice(0, -2);
+    if (this.exerciseId !== null || this.history.length === 0) return false;
+    const count = this.chess.turn() !== this.side ? 1 : 2;
+    if (this.history.length < count) return false;
+    const remaining = this.history.slice(0, -count);
     this.chess = this.reconstruct(remaining);
     this.history = remaining;
     this.revision += 1;

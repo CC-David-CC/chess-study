@@ -40,3 +40,12 @@ No authored `chess-guide.riv` is present. The visible guide is explicitly a
 development fallback, so the Rive acceptance gate remains open. Physical-phone
 testing, complete AI strength/performance measurements and a full
 cross-device playthrough remain unverified.
+
+While the local opponent is thinking, its pieces cannot be moved by the player.
+Undo removes a player move awaiting an AI reply, or the most recent completed
+player/AI pair. Resetting an exercise is an unsaved change. Keyboard shortcuts
+leave editable fields and controls alone. Local registered-account tests cover
+delayed AI replies and undo at desktop and emulated-phone sizes; a separate
+test uses the actual browser-local AI worker, syncs the game, and reopens it in
+a fresh phone-sized browser session. Physical touch and AI strength remain
+unverified.
