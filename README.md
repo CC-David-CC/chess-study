@@ -49,3 +49,7 @@ delayed AI replies and undo at desktop and emulated-phone sizes; a separate
 test uses the actual browser-local AI worker, syncs the game, and reopens it in
 a fresh phone-sized browser session. Physical touch and AI strength remain
 unverified.
+
+## Design requirements
+
+The original [design brief, controls, save rules, artwork and acceptance plans](design/README.md) are retained as reference. They describe targets; the implementation and qualification status above takes precedence.
