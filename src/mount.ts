@@ -34,7 +34,7 @@ export function mount(host: HostLike): MountResult {
   if (host.signal?.aborted) abort();
 
   queueMicrotask(() => {
-    void import('./view/run.js').then(async ({startView}) => {
+    void import('./view/run.ts').then(async ({startView}) => {
       if (disposed || controller.signal.aborted) return;
       const workerFactory = () => new Worker(
         new URL('./workers/chess-ai.mjs', import.meta.url),

@@ -1,8 +1,8 @@
 import {Chess,type Square} from 'chess.js';
-import {SynthAudio} from '../audio/synth.js';
-import {ChessStudySession,type Difficulty,type PlayerSide} from '../model/chessSession.js';
-import {EXERCISES,exerciseById} from '../model/exercises.js';
-import {decodeSave,encodeSave,sessionFromSave} from '../model/save.js';
+import {SynthAudio} from '../audio/synth.ts';
+import {ChessStudySession,type Difficulty,type PlayerSide} from '../model/chessSession.ts';
+import {EXERCISES,exerciseById} from '../model/exercises.ts';
+import {decodeSave,encodeSave,sessionFromSave} from '../model/save.ts';
 
 interface Host{
  signal:AbortSignal;
@@ -12,6 +12,31 @@ interface Host{
 }
 
 export interface ViewHandle{dispose():void}
+export interface ChessLayoutMetrics {
+  boardSize: number;
+  dpr: number;
+  targetBuffer: number;
+  cell: number;
+  pieceFont: string;
+  labelFont: string;
+  dotR: number;
+  tier: 'phone' | 'desktop' | '4k';
+}
+
+export function computeLayout(containerW: number, containerH: number, dpr = 1): ChessLayoutMetrics {
+  const w = containerW || 512;
+  const h = containerH || 512;
+  const minDim = Math.min(w, h);
+  const boardSize = Math.max(280, Math.floor(minDim));
+  const effectiveDpr = Math.min(dpr || 1, 4);
+  const targetBuffer = Math.round(boardSize * effectiveDpr);
+  const cell = boardSize / 8;
+  const pieceFont = `${Math.floor(cell * 0.65)}px Georgia,serif`;
+  const labelFont = `${Math.max(10, Math.floor(cell * 0.18))}px sans-serif`;
+  const dotR = Math.max(3, Math.floor(cell * 0.11));
+  const tier = w < 768 ? 'phone' : (w >= 2560 || (w >= 1920 && effectiveDpr >= 2)) ? '4k' : 'desktop';
+  return { boardSize, dpr: effectiveDpr, targetBuffer, cell, pieceFont, labelFont, dotR, tier };
+}
 type WorkerFactory=()=>Worker;
 const FILES='abcdefgh';
 const GLYPHS:Record<string,string>={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
@@ -99,19 +124,16 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
  const draw=(time=0)=>{
   if(disposed)return;
   const rect=board.getBoundingClientRect();
-  const measuredSize=Math.max(280,Math.floor(rect.width||board.clientWidth||512));
   const dpr=Math.min(window.devicePixelRatio||1,4);
-  const targetBuffer=Math.round(measuredSize*dpr);
+  const layout=computeLayout(rect.width||board.clientWidth||512,rect.height||board.clientHeight||512,dpr);
+  const {boardSize:measuredSize,targetBuffer,cell,pieceFont,labelFont,dotR}=layout;
   if(board.width!==targetBuffer||board.height!==targetBuffer){
    board.width=targetBuffer;
    board.height=targetBuffer;
   }
   context.setTransform(dpr,0,0,dpr,0,0);
 
-  const chess=currentChess(),rows=chess.board(),cell=measuredSize/8;
-  const pieceFont=`${Math.floor(cell*0.65)}px Georgia,serif`;
-  const labelFont=`${Math.max(10,Math.floor(cell*0.18))}px sans-serif`;
-  const dotR=Math.max(3,Math.floor(cell*0.11));
+  const chess=currentChess(),rows=chess.board();
 
   context.clearRect(0,0,measuredSize,measuredSize);
   for(let row=0;row<8;row++)for(let col=0;col<8;col++){

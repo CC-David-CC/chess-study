@@ -1,6 +1,6 @@
 import {Chess} from 'chess.js';
-import {chooseAiMove} from '../model/ai.js';
-import {Rng} from '../model/rng.js';
+import {chooseAiMove} from '../model/ai.ts';
+import {Rng} from '../model/rng.ts';
 
 interface SearchRequest {
   id: number;
