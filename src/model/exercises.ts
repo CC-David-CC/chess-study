@@ -1,4 +1,4 @@
-import type { PlayerSide } from "./chessSession.js";
+import type { PlayerSide } from "./chessSession.ts";
 
 export interface Exercise {
   id: string;

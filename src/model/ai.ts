@@ -1,5 +1,5 @@
 import { Chess, type Move } from "chess.js";
-import { Rng } from "./rng.js";
+import { Rng } from "./rng.ts";
 
 const PIECE_VALUES: Readonly<Record<string, number>> = {
   p: 100,

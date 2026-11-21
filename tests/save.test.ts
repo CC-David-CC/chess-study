@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { ChessStudySession } from "../src/model/chessSession.js";
+import { describe, expect, it } from "./test-shim.ts";
+import { ChessStudySession } from "../src/model/chessSession.ts";
 import {
   decodeSave,
   encodeSave,
   SaveError,
   sessionFromSave,
-} from "../src/model/save.js";
+} from "../src/model/save.ts";
 
 describe("Chess Study save codec", () => {
   it("round-trips starting FEN, history and revision", () => {

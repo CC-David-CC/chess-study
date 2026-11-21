@@ -22,7 +22,7 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
  const windowState=host.w?.chessStudy??{dirty:false};if(host.w)host.w.chessStudy=windowState;
  let session:ChessStudySession;
  try{session=ChessStudySession.startGame('w',2,Date.now())}catch{session=ChessStudySession.startGame('w',2)}
- let paused=true,disposed=false,dirty=false,selected:Square|null=null,promotion='q',aiWorker:Worker|null=null,aiId=0,thinking=false,unwatch=()=>{},watchSerial=0,watchCheck=0,savedPath:string|null=null,savedVersion:string|null=null,reduction=false,busy=false,revision=0;
+ let paused=true,disposed=false,dirty=false,selected:Square|null=null,promotion='q',aiWorker:Worker|null=null,aiId=0,thinking=false,unwatch=()=>{},watchSerial=0,watchCheck=0,savedPath:string|null=null,savedVersion:string|null=null,reduction=false,busy=false,revision=0,resizeObserver:ResizeObserver|null=null;
  const status=make('div','chess-status app-status','Paused. Choose a mode and press Resume.');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
  const warning=make('div','chess-warning','');warning.hidden=true;warning.setAttribute('role','status');
  const audio=new SynthAudio();audio.setVolume(.35);
@@ -52,7 +52,7 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
  toolbar.append(mode,side,exercise,difficulty,newGame,pause,openButton,saveButton);
 
  const main=make('div','chess-main'),left=make('div','chess-left'),right=make('div','chess-right');
- const board=doc.createElement('canvas');board.className='chess-board';board.width=512;board.height=512;board.tabIndex=0;
+ const board=doc.createElement('canvas');board.className='chess-board';board.tabIndex=0;
  board.setAttribute('role','application');board.setAttribute('aria-label','Chess board. Select a source square, then a destination square.');
  const boardNote=make('p','chess-board-note','Squares include file and rank labels. Selected and legal destination squares remain distinguishable without color.');
  left.append(board,boardNote);
@@ -98,27 +98,41 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
  };
  const draw=(time=0)=>{
   if(disposed)return;
-  const chess=currentChess(),rows=chess.board(),cell=64;
-  context.clearRect(0,0,512,512);
+  const rect=board.getBoundingClientRect();
+  const measuredSize=Math.max(280,Math.floor(rect.width||board.clientWidth||512));
+  const dpr=Math.min(window.devicePixelRatio||1,4);
+  const targetBuffer=Math.round(measuredSize*dpr);
+  if(board.width!==targetBuffer||board.height!==targetBuffer){
+   board.width=targetBuffer;
+   board.height=targetBuffer;
+  }
+  context.setTransform(dpr,0,0,dpr,0,0);
+
+  const chess=currentChess(),rows=chess.board(),cell=measuredSize/8;
+  const pieceFont=`${Math.floor(cell*0.65)}px Georgia,serif`;
+  const labelFont=`${Math.max(10,Math.floor(cell*0.18))}px sans-serif`;
+  const dotR=Math.max(3,Math.floor(cell*0.11));
+
+  context.clearRect(0,0,measuredSize,measuredSize);
   for(let row=0;row<8;row++)for(let col=0;col<8;col++){
    const dark=(row+col)%2===1,light=contrast.value==='standard'?(dark?'#7b593e':'#e0cfaa'):(dark?'#222b3d':'#f8fafc');
    context.fillStyle=light;context.fillRect(col*cell,row*cell,cell,cell);
    const square=`${FILES[col]}${session.side==='w'?8-row:row+1}` as Square;
    if(selected===square){context.fillStyle='rgba(79,142,247,.55)';context.fillRect(col*cell,row*cell,cell,cell)}
    const legal=selected!==null&&session.legalMoves().some(move=>move.from===selected&&move.to===square);
-   if(legal){context.beginPath();context.arc(col*cell+32,row*cell+32,7,0,Math.PI*2);context.fillStyle='#2f6f4e';context.fill()}
+   if(legal){context.beginPath();context.arc(col*cell+cell/2,row*cell+cell/2,dotR,0,Math.PI*2);context.fillStyle='#2f6f4e';context.fill()}
    const piece=rows[row][col];
    if(piece!==null){
-    context.textAlign='center';context.textBaseline='middle';context.font='42px Georgia,serif';context.lineWidth=4;
+    context.textAlign='center';context.textBaseline='middle';context.font=pieceFont;context.lineWidth=Math.max(2,Math.floor(cell*0.06));
     context.strokeStyle=piece.color==='w'?'#3b2d22':'#f2eee4';context.fillStyle=piece.color==='w'?'#fffdf4':'#171b26';
-    context.strokeText(GLYPHS[piece.type],col*cell+32,row*cell+34);context.fillText(GLYPHS[piece.type],col*cell+32,row*cell+34);
+    context.strokeText(GLYPHS[piece.type],col*cell+cell/2,row*cell+cell*0.53);context.fillText(GLYPHS[piece.type],col*cell+cell/2,row*cell+cell*0.53);
    }
    if(row===7||col===0){
-    context.font='11px sans-serif';context.fillStyle=dark?'#f4f4f4':'#222';context.textAlign=col===0?'left':'right';context.textBaseline='bottom';
-    const label=row===7?FILES[col]:String(session.side==='w'?8-row:row+1);context.fillText(label,col===0?col*cell+3:col*cell+61,row*cell+61);
+    context.font=labelFont;context.fillStyle=dark?'#f4f4f4':'#222';context.textAlign=col===0?'left':'right';context.textBaseline='bottom';
+    const label=row===7?FILES[col]:String(session.side==='w'?8-row:row+1);context.fillText(label,col===0?col*cell+3:col*cell+cell-3,row*cell+cell-3);
    }
   }
-  if(!reduction&&session.check){context.strokeStyle='#c33';context.lineWidth=5;context.strokeRect(2,2,508,508)}
+  if(!reduction&&session.check){context.strokeStyle='#c33';context.lineWidth=Math.max(3,Math.floor(cell*0.08));context.strokeRect(2,2,measuredSize-4,measuredSize-4)}
   const whose=session.isAiTurn()?'Local AI':session.turn==='w'?'White':'Black';
   info.textContent=`${session.result==='playing'?`${whose} to move`:session.result.replaceAll('-',' ')} · ${session.difficulty===1?'Casual':session.difficulty===2?'Club':'Deep'}${session.check?' · Check':''}`;
   const tail=session.history.slice(-8);history.textContent=tail.length?`Moves: ${tail.join(' ')}`:'Moves: —';
@@ -267,12 +281,14 @@ export async function startView(container:HTMLElement,signal:AbortSignal,host:Ho
  const desktopWindow=container.closest<HTMLElement>('.window');
  const windowObserver=desktopWindow?new MutationObserver(()=>{if(desktopWindow.hidden||!desktopWindow.classList.contains('focused')||desktopWindow.classList.contains('rolled'))suspend()}):null;
  windowObserver?.observe(desktopWindow!,{attributes:true,attributeFilter:['class','hidden']});
+ resizeObserver=new ResizeObserver(()=>{if(!disposed)draw()});
+ resizeObserver.observe(left);
  window.addEventListener('blur',suspend);doc.addEventListener('visibilitychange',visibility);
  draw();frame=requestAnimationFrame(paint);
  if(host.w?.launchContext?.storage==='mirror'&&host.w.launchContext.owner===owner){const initialPath=host.w.launchContext.path;path.value=initialPath;const openWhenConnected=(attempt=0):void=>{if(disposed||signal.aborted)return;if(!container.isConnected&&attempt<60)setTimeout(()=>openWhenConnected(attempt+1),16);else if(valid())void open(initialPath)};queueMicrotask(()=>openWhenConnected())}
  else tell('Choose a game or exercise, then press Resume.');
 
  return {dispose(){
-  if(disposed)return;disposed=true;cancelAnimationFrame(frame);stopAi();clearWatch();windowObserver?.disconnect();board.removeEventListener('pointerdown',boardPointer);board.removeEventListener('keydown',keyboard);window.removeEventListener('blur',suspend);doc.removeEventListener('visibilitychange',visibility);audio.dispose();container.replaceChildren();
+  if(disposed)return;disposed=true;cancelAnimationFrame(frame);stopAi();clearWatch();resizeObserver?.disconnect();windowObserver?.disconnect();board.removeEventListener('pointerdown',boardPointer);board.removeEventListener('keydown',keyboard);window.removeEventListener('blur',suspend);doc.removeEventListener('visibilitychange',visibility);audio.dispose();container.replaceChildren();
  }};
 }

@@ -1,6 +1,6 @@
 import { Chess, type Move } from "chess.js";
-import { exerciseById } from "./exercises.js";
-import { Rng } from "./rng.js";
+import { exerciseById } from "./exercises.ts";
+import { Rng } from "./rng.ts";
 
 export type Difficulty = 1 | 2 | 3;
 export type PlayerSide = "w" | "b";

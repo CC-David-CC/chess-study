@@ -1,5 +1,5 @@
 import { Chess } from "chess.js";
-import { ChessStudySession, type ChessSnapshot } from "./chessSession.js";
+import { ChessStudySession, type ChessSnapshot } from "./chessSession.ts";
 
 export const SAVE_FORMAT = "ksu.game.save";
 export const SAVE_SCHEMA_VERSION = 1;
@@ -17,8 +17,10 @@ export interface ChessSaveEnvelope {
 }
 
 export class SaveError extends Error {
-  constructor(readonly reason: string) {
+  readonly reason: string;
+  constructor(reason: string) {
     super(`chess-study save rejected: ${reason}`);
+    this.reason = reason;
     this.name = "SaveError";
   }
 }

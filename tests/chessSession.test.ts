@@ -1,9 +1,9 @@
 import { Chess } from "chess.js";
-import { describe, expect, it } from "vitest";
-import { chooseAiMove } from "../src/model/ai.js";
-import { ChessStudySession } from "../src/model/chessSession.js";
-import { EXERCISES } from "../src/model/exercises.js";
-import { Rng } from "../src/model/rng.js";
+import { describe, expect, it } from "./test-shim.ts";
+import { chooseAiMove } from "../src/model/ai.ts";
+import { ChessStudySession } from "../src/model/chessSession.ts";
+import { EXERCISES } from "../src/model/exercises.ts";
+import { Rng } from "../src/model/rng.ts";
 
 describe("ChessStudySession rules", () => {
   it("uses chess.js so underpromotion, en passant exposure and castling rules are enforced", () => {
